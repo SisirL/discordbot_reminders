@@ -1,18 +1,15 @@
 import discord
-import discord.ext.commands
-import discord.ext.tasks
 import config
 import time
-import functools, typing, asyncio
-
+import ai_chatter
 import warnings
-
-import discord.ext
 warnings.filterwarnings("ignore", "Runtime warning received", RuntimeWarning)
 
 class MyClient(discord.Client):
     async def on_ready(self):
         print(f'Login as {self.user} successful (ID: {self.user.id})')
+        ai_chatter.connect_gemini()
+        ai_chatter.gemini_setup()
     
     async def on_message(self, message: discord.Message):
         def time_delay(func):
@@ -45,13 +42,17 @@ class MyClient(discord.Client):
                 if 's' in info:
                     seconds += int([x.strip()[:-1] for x in duration if 's' in x][0])
                 if not seconds:
-                    await message.reply("Please specify the time correctly")
+                    await message.reply("Please specify the time correctly.")
                 else:
                     await message.reply("Okay, I will remind you!")
                     await remind_after(seconds, message)
             except Exception as e:
                 print(e.with_traceback())
 
+        else:
+            reponse = ai_chatter.get_response(message.content.strip())
+            await message.reply(reponse, mention_author=True)
+            # await message.reply from gemini
 
         '''
         Message:
